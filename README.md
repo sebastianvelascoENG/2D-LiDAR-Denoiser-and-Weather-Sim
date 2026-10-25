@@ -23,7 +23,14 @@ run is scored against a drift-free ground-truth pose.
 - Per-beam ground-truth labels, so the denoiser can be scored directly.
 - Unattended batch experiments with a progress bar, watchdogs, retries and
   clean teardown, plus automatic statistics.
-- Over 100 unit tests covering the weather physics.
+
+**Results**
+- Path planning variance was improved to consistently follow similar paths in denoised runs. Overall mission time was reduced.
+<img width="614" height="686" alt="Paths" src="https://github.com/user-attachments/assets/ec59b7c7-75b1-436d-87aa-c245a97ee59d" />
+
+- Map generation was negatively impacted, with some maps losing precision on edges or losing information.
+<img width="696" height="458" alt="Maps" src="https://github.com/user-attachments/assets/67e71426-c892-4c87-a90b-bdd6c8399df4" />
+
 
 ---
 
