@@ -1,0 +1,130 @@
+# weather_model_node parameters (was rain_params.yaml / rain_model_node).
+#
+# Rain, fog and dust are switched on and off independently:
+#   rain  calm | light | heavy     (0 / 6 / 25 mm/h; rain_rate_mm_h >= 0 overrides)
+#   fog   off  | light | heavy     (visibility 100 / 50 m; fog_visibility_m > 0 overrides)
+#   dust  off  | light | heavy     (visibility 20 / 5 m inside the clouds of dust_cloud_set;
+#                                   dust_visibility_m > 0 overrides)
+# An override changes the visibility of an effect that is on; it never switches
+# an 'off' effect on. Fog and dust need rain_model goodin2019, alavi2025 or
+# hybrid (legacy has no power-based sensor and is rejected).
+#
+# experiment.launch.py overrides rain, fog, dust, the visibilities,
+# dust_cloud_set, seed, rain_model and use_sim_time from its launch args.
+# Every parameter can also be changed at run time (ros2 param set
+# /weather_model_node fog heavy); invalid values are rejected.
+# Equations and assumptions: thesis_rain_sim/rain_models.py and
+# thesis_rain_sim/fog_dust.py.
+/**:
+  ros__parameters:
+    use_sim_time: true
+    scan_in: /scan_clean
+    scan_out: /scan
+    labels_out: /scan_rain_labels   # per-beam labels for every weather effect (codes 0-6)
+    rain: ''                 # calm | light | heavy; '' = calm (or the deprecated alias `condition`)
+    condition: ''            # DEPRECATED alias for `rain`; both set and different is an error
+    rain_rate_mm_h: -1.0
+    fog: 'off'
+    fog_visibility_m: -1.0
+    dust: 'off'
+    dust_visibility_m: -1.0
+    seed: 1                  # rain RNG; fog / dust draw from a second stream seeded [seed, 1]
+
+    # legacy | goodin2019 | alavi2025 | hybrid
+    # legacy reproduces the original node bit for bit (same seed -> same scans).
+    rain_model: hybrid
+
+    # ===================== legacy ==========================================
+    # return-intensity model  I = i0 / r^2 * exp(-2*alpha*r)
+    i0: 10000.0
+    intensity_noise_frac: 0.05
+    min_detectable_intensity: 8.0
+
+    # extinction  alpha(R) = alpha_k * R^alpha_p   [1/m]
+    alpha_k: 0.01
+    alpha_p: 0.6
+    q_scatter: 0.6
+
+    # range error  sigma_r = sqrt(sigma0^2 + (k_rain * R * r/r_max)^2)
+    range_sigma_base_m: 0.012
+    k_rain_range: 0.02
+
+    # droplet false returns
+    p_false_k: 0.004
+    false_range_min_m: 0.30
+    false_range_max_m: 4.0
+    false_intensity_mean: 6.0
+    false_intensity_frac: 0.5
+
+    # ============ goodin2019 + alavi2025 + hybrid (shared) ==================
+    # Detection threshold P_min = z_max_reflectivity / (pi * z_max^2)  (Goodin Eq. 4).
+    # RPLiDAR C1 data sheet: 12 m range at 70 % reflectivity.
+    z_max: 12.0
+    z_max_reflectivity: 0.7
+    # gz gpu_lidar gives no per-surface reflectivity (intensities are all 0),
+    # so every surface is a Lambertian target of this reflectivity.
+    default_reflectivity: 0.7
+    # Sensor (non-rain) range noise. gz already applies simulator_sigma_m
+    # (model.sdf <noise>); the node adds sqrt(total^2 - simulator^2) = 6.6 mm so
+    # the TOTAL is 12 mm (independent Gaussians add in variance).
+    sensor_sigma_total_m: 0.012
+    simulator_sigma_m: 0.010
+    # published intensity = relative power P_n * scale. 1e4*pi makes a
+    # reflectivity-1 target match the legacy i0 = 10000 scale.
+    intensity_output_scale: 31415.926535897932
+
+    # ===================== goodin2019 =======================================
+    a: 0.01                  # Eq. 5  alpha = a R^b  [1/m]
+    b: 0.6
+    range_noise_frac: 0.02   # Eq. 9  sigma = 0.02 z (1 - e^-R)^2
+
+    # ===================== alavi2025 ========================================
+    rain_type: continental   # continental | thunderstorm | tropical (Table 2)
+    pulse_width_s: 5.0e-9    # pulse FWHM (not published for the C1); bin width c*tau/2
+    overlap_r1_m: 0.05       # bistatic overlap 0 below R1 (C1 min range 0.05 m) ...
+    overlap_r2_m: 1.0        # ... ramps to 1 at R2
+    echo_mode: strongest     # strongest (Alavi Sec. 5.1) | first
+    backscatter_mode: stochastic   # stochastic | mean (deterministic, analysis only)
+    use_incidence_angle: false     # cos(incidence) from a local line fit
+    incidence_window: 2
+
+    # ===================== hybrid ===========================================
+    # Drop physics from LISA (Kilic et al. 2021, arXiv:2107.07004) on the
+    # alavi2025 sensor (threshold, overlap, single strongest echo). Also uses
+    # the shared block above plus rain_type, overlap_r1_m and overlap_r2_m.
+    # dsd: Eq. 3 with Q_ext = 2 over the Marshall-Palmer DSD (alpha = pi N0 / Lambda^3).
+    # alavi: Alavi Table 2 alpha_rain(rain_type, R), for sensitivity runs only.
+    extinction_source: dsd
+    mp_n0: 8000.0                # Marshall & Palmer 1948: N0 [m^-3 mm^-1]
+    mp_lambda_k: 4.1             # Marshall & Palmer 1948: Lambda = k R^p [1/mm]
+    mp_lambda_p: -0.21
+    min_drop_diameter_mm: 0.05   # LISA Sec. 5.1: D_st = 50 um
+    max_drop_diameter_mm: 6.0    # (assumption) larger drops break up; LISA has no clip
+    beam_divergence_rad: 3.0e-3  # (assumption) LISA Sec. 5.1 Velodyne value; not in the C1 data sheet
+    beam_exit_diameter_m: 0.0    # (assumption) point source as in LISA Alg. 1; not in the C1 data sheet
+    drop_reflectivity: 0.0201    # LISA Eq. 11, Fresnel at normal incidence, water n = 1.33
+    range_accuracy_m: 0.06       # (assumption) C1 accuracy +/-30 mm read as a full span dR, as LISA Sec. 5.1 does
+    use_overlap: true            # Alavi Sec. 2.1 overlap ramp on drop echoes (not in LISA), as alavi2025
+
+    # ===================== fog + dust (fog_dust.py) =========================
+    # Fog and dust use the SHARED
+    # sensor above (z_max, z_max_reflectivity, default_reflectivity,
+    # intensity_output_scale) and pulse_width_s / overlap_r1_m / overlap_r2_m
+    # from the alavi2025 block, whatever rain_model is selected.
+    # Dust clouds: config/dust_clouds.yaml ('' = the installed copy).
+    dust_clouds_file: ''
+    dust_cloud_set: sensor_ahead   # experiment.launch.py passes the world name
+    # Sensor pose for frame: world clouds. ground_truth: /ground_truth odometry
+    # (gz world, no drift) + TF base_frame -> scan frame. tf: TF world_frame -> scan frame.
+    world_pose_source: ground_truth
+    ground_truth_topic: /ground_truth
+    world_frame: map
+    base_frame: base_footprint
+    visibility_convention: kim     # kim: alpha = 3.912/V (Kim 2001) | mor: 3.0/V (Hahner 2021)
+    fog_beta_model: rasshofer      # rasshofer 0.046/V | alavi alpha/(1.44*4pi) per sr | alavi_raw alpha/1.44
+    dust_beta_model: alavi         # alavi 5.38 V^-1.016 / (4 pi) per sr | alavi_raw as printed
+    soft_range_step_m: 0.02        # R grid of the soft-return peak search
+    soft_integration_points: 101   # odd (composite Simpson over the pulse)
+    soft_range_convention: rising_edge   # rising_edge | peak
+    soft_gain: 1.0                 # sensitivity studies only
+    jitter_exponent_max: 1.0       # Hahner: soft range * 2^U(-1, 1); 0 disables

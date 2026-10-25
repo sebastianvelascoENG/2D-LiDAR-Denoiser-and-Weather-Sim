@@ -1,0 +1,137 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="rain_yard">
+
+    <physics name="1ms" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"></plugin>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"></plugin>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"></plugin>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <scene>
+      <ambient>0.45 0.45 0.5 1</ambient>
+      <background>0.6 0.62 0.66 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 12 0 0 0</pose>
+      <diffuse>0.7 0.7 0.72 1</diffuse>
+      <specular>0.15 0.15 0.15 1</specular>
+      <direction>-0.4 0.3 -0.85</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>60 60</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>60 60</size></plane></geometry>
+          <material><ambient>0.35 0.4 0.32 1</ambient><diffuse>0.35 0.4 0.32 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Perimeter fence: ~24 x 24 m enclosure, 1.2 m tall, 0.1 m thick -->
+    <model name="fence_north">
+      <static>true</static>
+      <pose>0 12 0.6 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>24.2 0.1 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>24.2 0.1 1.2</size></box></geometry>
+          <material><ambient>0.55 0.45 0.35 1</ambient><diffuse>0.55 0.45 0.35 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="fence_south">
+      <static>true</static>
+      <pose>0 -12 0.6 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>24.2 0.1 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>24.2 0.1 1.2</size></box></geometry>
+          <material><ambient>0.55 0.45 0.35 1</ambient><diffuse>0.55 0.45 0.35 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="fence_east">
+      <static>true</static>
+      <pose>12 0 0.6 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>24.2 0.1 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>24.2 0.1 1.2</size></box></geometry>
+          <material><ambient>0.55 0.45 0.35 1</ambient><diffuse>0.55 0.45 0.35 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="fence_west">
+      <static>true</static>
+      <pose>-12 0 0.6 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>24.2 0.1 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>24.2 0.1 1.2</size></box></geometry>
+          <material><ambient>0.55 0.45 0.35 1</ambient><diffuse>0.55 0.45 0.35 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Shed -->
+    <model name="shed">
+      <static>true</static>
+      <pose>-6 6 1.0 0 0 0.3</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>3.0 2.2 2.0</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>3.0 2.2 2.0</size></box></geometry>
+          <material><ambient>0.5 0.3 0.25 1</ambient><diffuse>0.5 0.3 0.25 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Low garden wall segment -->
+    <model name="garden_wall">
+      <static>true</static>
+      <pose>4 -3 0.4 0 0 0.9</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>6.0 0.3 0.8</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>6.0 0.3 0.8</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Trees (trunks as cylinders) - spread out for scan-matching features -->
+    <model name="tree_1"><static>true</static><pose>3 5 1.25 0 0 0</pose><link name="link">
+      <collision name="c"><geometry><cylinder><radius>0.25</radius><length>2.5</length></cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder><radius>0.25</radius><length>2.5</length></cylinder></geometry>
+        <material><ambient>0.35 0.25 0.15 1</ambient><diffuse>0.35 0.25 0.15 1</diffuse></material></visual></link></model>
+
+    <model name="tree_2"><static>true</static><pose>-3 -5 1.25 0 0 0</pose><link name="link">
+      <collision name="c"><geometry><cylinder><radius>0.3</radius><length>2.5</length></cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder><radius>0.3</radius><length>2.5</length></cylinder></geometry>
+        <material><ambient>0.35 0.25 0.15 1</ambient><diffuse>0.35 0.25 0.15 1</diffuse></material></visual></link></model>
+
+    <model name="tree_3"><static>true</static><pose>7 -7 1.25 0 0 0</pose><link name="link">
+      <collision name="c"><geometry><cylinder><radius>0.22</radius><length>2.5</length></cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder><radius>0.22</radius><length>2.5</length></cylinder></geometry>
+        <material><ambient>0.35 0.25 0.15 1</ambient><diffuse>0.35 0.25 0.15 1</diffuse></material></visual></link></model>
+
+    <model name="tree_4"><static>true</static><pose>-8 2 1.25 0 0 0</pose><link name="link">
+      <collision name="c"><geometry><cylinder><radius>0.28</radius><length>2.5</length></cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder><radius>0.28</radius><length>2.5</length></cylinder></geometry>
+        <material><ambient>0.35 0.25 0.15 1</ambient><diffuse>0.35 0.25 0.15 1</diffuse></material></visual></link></model>
+
+    <!-- Planter boxes -->
+    <model name="planter_1"><static>true</static><pose>1.5 1.5 0.3 0 0 0</pose><link name="link">
+      <collision name="c"><geometry><box><size>1.2 1.2 0.6</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>1.2 1.2 0.6</size></box></geometry>
+        <material><ambient>0.3 0.45 0.3 1</ambient><diffuse>0.3 0.45 0.3 1</diffuse></material></visual></link></model>
+
+    <model name="planter_2"><static>true</static><pose>6 2 0.3 0 0 0.5</pose><link name="link">
+      <collision name="c"><geometry><box><size>1.0 2.0 0.6</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>1.0 2.0 0.6</size></box></geometry>
+        <material><ambient>0.3 0.45 0.3 1</ambient><diffuse>0.3 0.45 0.3 1</diffuse></material></visual></link></model>
+
+  </world>
+</sdf>

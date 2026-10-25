@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# colcon (if the workspace is ever cloned as the repo root)
+build/
+install/
+log/
+
+# editor / OS
+*.bak
+*.swp
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

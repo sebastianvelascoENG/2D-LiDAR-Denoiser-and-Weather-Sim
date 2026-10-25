@@ -1,0 +1,36 @@
+# Dust cloud sets for weather_model_node (dust:=light|heavy).
+#
+# Dust exists only inside these clouds; fog fills all space. The density comes
+# from the dust level (light V = 20 m, heavy V = 5 m, or dust_visibility_m),
+# the geometry from the set picked by `dust_cloud_set`. experiment.launch.py
+# picks the set named after the world (dust_clouds:= overrides it).
+#
+# Cloud shapes (2D, any number per set):
+#   {shape: circle, frame: world|sensor, x, y, radius}
+#   {shape: box,    frame: world|sensor, x, y, size_x, size_y}   axis-aligned; centre + full sides
+# frame: world  = fixed in the Gazebo world. The node gets the sensor pose from
+#                 /ground_truth (world_pose_source: ground_truth) or TF (tf).
+#                 The robot spawns at the world origin, so world = SLAM map at the start.
+# frame: sensor = fixed relative to the LiDAR (moves with the robot).
+# Overlapping clouds of one set are one medium (no double counting).
+#
+# The world sets put clouds on the mission routes (run_sweep.sh GOALS), clear
+# of the obstacles, so the robot drives through dust on every lap.
+cloud_sets:
+
+  # rain_room: 10 x 10 m walled room. Loop (3.5,3.5) -> (-2.5,2.5) -> (-2.5,-2.5) -> (2.5,-2.5).
+  rain_room:
+    - {shape: circle, frame: world, x: 0.5, y: 3.0, radius: 1.0}     # north leg
+    - {shape: circle, frame: world, x: 0.5, y: -2.5, radius: 1.0}    # south leg
+    - {shape: box, frame: world, x: -2.5, y: -1.0, size_x: 1.6, size_y: 1.4}  # west leg, between obstacle_box_2 and the cylinder
+
+  # rain_yard: 24 x 24 m fenced yard. Loop (6,6) -> (-6,9) -> (-6,-6) -> (6,-6).
+  rain_yard:
+    - {shape: circle, frame: world, x: 0.0, y: 7.5, radius: 1.5}     # north leg
+    - {shape: box, frame: world, x: -6.0, y: 0.0, size_x: 3.0, size_y: 2.0}   # west leg
+    - {shape: circle, frame: world, x: 0.0, y: -6.0, radius: 1.5}    # south leg
+
+  # One cloud 2 m ahead of the sensor, always.
+  # Useful on recorded bags or with no ground truth; unrealistic for navigation.
+  sensor_ahead:
+    - {shape: circle, frame: sensor, x: 2.0, y: 0.0, radius: 0.75}

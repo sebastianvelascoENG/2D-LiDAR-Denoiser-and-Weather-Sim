@@ -1,0 +1,23 @@
+clustering_denoiser_node:
+  ros__parameters:
+    use_sim_time: true
+    scan_in: /scan
+    scan_out: /scan_denoised
+    min_range: 0.10
+    max_range: 12.0
+
+    # keyframe extraction (efficiency metric; every frame is still published)
+    use_keyframe: true
+    hist_bins: 36
+    keyframe_window: 6
+    keyframe_corr_threshold: 0.95
+
+    # angular clustering
+    num_regions: 4
+    angle_threshold_mult: 3.0
+    merge_regions: true
+
+    # cluster removal - low mean intensity is the primary criterion (thesis)
+    intensity_threshold: 15.0
+    min_cluster_points: 3
+    require_both: false
